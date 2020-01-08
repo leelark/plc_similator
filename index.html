@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="ISO-8859-1">
+	<title>PLC Simulator</title>
+	<style>
+		input:out-of-range {
+			border: 2px solid red;
+		}
+
+		td {
+			border: 1px solid black;
+		}
+
+		table {
+			font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+			border-collapse: collapse;
+			width: 100%;
+		}
+
+		table td,
+		table th {
+			border: 1px solid #ddd;
+			padding: 8px;
+		}
+
+		table tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+
+		table tr:hover {
+			background-color: #ddd;
+		}
+
+		table th {
+			padding-top: 12px;
+			padding-bottom: 12px;
+			text-align: left;
+			background-color: #4CAF50;
+			color: white;
+		}
+
+		.header h1 {
+			float: left;
+			font-weight: 500;
+			color: mediumblue;
+		}
+
+		.button {
+			background-color: dodgerblue;
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 4px 2px;
+			cursor: pointer;
+			border-radius: 10px;
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script>
+		var machines = {};
+		$("document").ready(function () {
+			var test = $.getJSON('stations/data/', function (data) {
+				machines = data;
+				// CREATE DYNAMIC TABLE.
+				var table = document.createElement("table");
+				var table = "<table>";
+				table += "<thead><th>Machine</th><th>Sensor</th><th>value</th></thead>"
+				table += "<tbody>"
+
+				for (var machine_name in machines) {
+					var sensor_list = machines[machine_name];
+					var row_span = Object.keys(sensor_list).length;
+					var count = 0;
+					for (var sensor_name in sensor_list) {
+						if (count == 0) {
+							table += "<tr><td rowspan='" + row_span + "'>" + machine_name
+								+ "</td>";
+							table += "<td>" + sensor_name + "</td>";
+							table += "<td class='json-data' data-machine-name=" + machine_name + " data-sensor-name='" + sensor_name + "'><input type='number' min='0' max='100' value='" + sensor_list[sensor_name] + "'></td></tr>";
+						} else {
+							table += "<tr><td data-value='sensor-name'>" + sensor_name + "</td>";
+							table += "<td class='json-data' data-machine-name=" + machine_name + " data-sensor-name='" + sensor_name + "'><input type='number' min='0' max='100' value='" + sensor_list[sensor_name] + "'></td></tr>";
+						}
+						count++;
+					}
+				}
+				table += "</tbody></table>"
+				document.getElementById("shawTable").innerHTML = table;
+			});
+
+		})
+
+
+		function updateJSON() {
+			for (var machine_name in machines) {
+				var sensor_list = machines[machine_name];
+				for (var sensor_name in sensor_list) {
+					var updatedVal = $("td.json-data[data-sensor-name ='" + sensor_name + "']").find("input").val();
+					if (updatedVal != sensor_list[sensor_name]) {
+						sensor_list[sensor_name] = updatedVal;
+					}
+				}
+			}
+			$.post("updateStations", machines, function (result) {
+				//console.log(result);
+			}).done(function () { alert('Station data has been updated !!'); });
+
+		}
+	</script>
+</head>
+
+<body>
+
+	<div class="header">
+		<input class="button" type="button" onclick="updateJSON()" value="Update PLC Data" />
+	</div>
+	<div id="shawTable"></div>
+</body>
+
+</html>
